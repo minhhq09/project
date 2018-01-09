@@ -56,10 +56,9 @@ class ProjectTask(models.Model):
         from_string = fields.Datetime.from_string
         start = from_string(date_start)
         end = from_string(date_end)
-        # If end < start, do nothing
-        if end < start:
-            return vals
         resource, calendar = self._resource_calendar_select()
+        if end < start or not resource or not calendar:
+            return vals
         default_interval = self._interval_default_get()
         # Calculate estimated_day
         vals['estimated_days'] = calendar.get_working_days_of_date(
@@ -225,6 +224,8 @@ class ProjectTask(models.Model):
         to_string = fields.Datetime.to_string
         for task in self.filtered('include_in_recalculate'):
             resource, calendar = task._resource_calendar_select()
+            if not resource or not calendar:
+                continue
             increment, project_date, from_days = task._calculation_prepare()
             date_start = False
             date_end = False
